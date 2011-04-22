@@ -22,6 +22,12 @@ data PermGroup = Group {
   generators :: Vector Perm,
   cosetTables :: Vector (Vector Perm)}
 
+instance Eq PermGroup where
+  g1 == g2 
+    | V.length (generators g1) <= V.length (generators g2)
+      = deg g1 == deg g2 && order g1 == order g2 && V.all (`member` g2) (generators g1)
+    | otherwise = g2 == g1
+
 permutationGroup :: Int -> [Perm] -> PermGroup
 permutationGroup !deg gens = assert (L.all (\ g -> degree g == deg) gens) $ let
   cosetTables = V.map V.fromList $ buildTables deg gens
