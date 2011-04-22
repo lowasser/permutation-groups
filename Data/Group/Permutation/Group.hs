@@ -1,5 +1,6 @@
-{-# LANGUAGE BangPatterns #-}
-module Data.Group.Permutation.Group where
+{-# LANGUAGE BangPatterns, RecordWildCards, NamedFieldPuns #-}
+{-# OPTIONS -funbox-strict-fields #-}
+module Data.Group.Permutation.Group (PermGroup, permutationGroup, member) where
 
 import Control.Exception.Base
 import Control.Monad.ST
@@ -9,15 +10,37 @@ import qualified Data.List as L
 
 import Data.Group.Permutation.Permutation
 import Data.Vector (Vector, create)
+import qualified Data.Vector as V
 import Data.Vector.Mutable
 import qualified Data.Vector.Mutable as MV
 
 import Prelude hiding (read, filter, (*))
 
+data PermGroup = Group {
+  deg :: !Int,
+  order :: Int,
+  generators :: Vector Perm,
+  cosetTables :: Vector (Vector Perm)}
+
+permutationGroup :: Int -> [Perm] -> PermGroup
+permutationGroup !deg gens = assert (L.all (\ g -> degree g == deg) gens) $ let
+  cosetTables = V.map V.fromList $ buildTables deg gens
+  generators = V.fromList gens
+  order = V.product (V.map V.length cosetTables)
+  in Group{..}
+
+member :: Perm -> PermGroup -> Bool
+member alpha Group{!cosetTables, deg} = assert (degree alpha == deg) $ member_loop alpha 0 where
+  member_loop !alpha !i
+    | i >= V.length cosetTables = return True
+    | otherwise = case V.find (`fixes` i+1) (V.map (\ gamma -> inverse gamma * alpha) (V.unsafeIndex cosetTables i)) of
+	Just alpha' -> member_loop alpha' (i+1)
+	Nothing -> return False
+
 type MCosetTable s = MVector s [Perm]
 
 buildTables :: Int -> [Perm] -> Vector [Perm]
-buildTables !deg generators = assert (L.all (\ g -> degree g == deg) generators) $ create $ do
+buildTables deg generators = create $ do
   table <- MV.new (deg-1)
   let go_build (alpha:queue) = do
 	result <- filter alpha 0 table
