@@ -16,8 +16,8 @@ genPerm n = do
   return $ mkPerm n ((P.!) perm)
 
 compositionProp :: Property
-compositionProp = printTestCase "Composition" $ do
-  Positive n <- arbitrary
+compositionProp = printTestCase "Composition" $ sized $ \ m -> do
+  n <- choose (1, m)
   p1 <- genPerm n
   p2 <- genPerm n
   return $ printTestCase (show (p1, p2)) $ mkPerm n ((p1 !) . (p2 !)) == p1 * p2
