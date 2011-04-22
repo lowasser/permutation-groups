@@ -5,4 +5,4 @@ import qualified Data.Group.Permutation.Permutation.Tests as PermTests
 tests = conjoin
   [printTestCase "Permutation" $ conjoin PermTests.tests]
 
-main = quickTest tests
+main = quickCheck tests

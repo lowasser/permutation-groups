@@ -15,10 +15,10 @@ degree :: Perm -> Int
 degree (Perm p) = length p
 
 (*) :: Perm -> Perm -> Perm
-Perm p @ Perm q = Perm (map (! q) p)
+Perm p * Perm q = Perm (map ((P.!) q) p)
 
-mkPermutation :: Int -> (Int -> Int) -> Perm
-mkPermutation k p = Perm (generate k p)
+mkPerm :: Int -> (Int -> Int) -> Perm
+mkPerm k p = Perm (generate k p)
 
 (!) :: Perm -> Int -> Int
 Perm p ! i = (P.!) p i
