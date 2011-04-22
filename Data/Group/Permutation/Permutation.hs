@@ -3,7 +3,7 @@ module Data.Group.Permutation.Permutation where
 import Data.Vector.Primitive
 import qualified Data.Vector.Primitive as P
 
-import Prelude hiding (length, (@), map)
+import Prelude hiding (length, (*), map)
 
 newtype Perm = Perm {getPerm :: Vector Int} deriving (Eq) -- p[i] is where i goes
 
@@ -14,7 +14,7 @@ inverse (Perm p) = Perm (backpermute (enumFromN 0 n) p)
 degree :: Perm -> Int
 degree (Perm p) = length p
 
-(@) :: Perm -> Perm -> Perm
+(*) :: Perm -> Perm -> Perm
 Perm p @ Perm q = Perm (map (! q) p)
 
 mkPermutation :: Int -> (Int -> Int) -> Perm
