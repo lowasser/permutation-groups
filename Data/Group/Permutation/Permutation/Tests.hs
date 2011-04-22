@@ -40,7 +40,14 @@ associativeProp n = printTestCase "Associative" $ do
   c <- genPerm n
   return $ printTestCase (show (a, b, c)) $ (a * b) * c == a * (b * c)
 
+injective :: Int -> Property
+injective n = printTestCase "Injectivity" $ do
+  p <- genPerm n
+  i <- choose (0, n-1)
+  j <- choose (0, n-1)
+  return $ printTestCase (show (p, i, j)) $ (i == j) == ((p ! i) == (p ! j))
+
 tests :: Property
 tests = property $ sized $ \ m -> do
   n <- choose (1, m)
-  return $ conjoin $ map ($ n) [compositionProp, inverseProp, identityProp, associativeProp]
+  return $ conjoin $ map ($ n) [compositionProp, inverseProp, identityProp, associativeProp, injective]
