@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
-module Data.Group.Permutation.Permutation (Perm, inverse, degree, (*), (!), (^), mkPerm, identity) where
+module Data.Group.Permutation.Permutation (Perm, inverse, degree, (*), (!), (^), mkPerm, identity, cycPerm) where
 
+import qualified Control.Monad as M
 import Control.Monad.ST
 
 import qualified Data.List as L
@@ -9,6 +10,7 @@ import Data.Bits
 import Control.Exception.Base
 import Data.Vector.Primitive hiding ((!), (++))
 import qualified Data.Vector.Primitive as P
+import qualified Data.Vector.Primitive.Mutable as PM
 import qualified Data.Vector.Unboxed.Mutable as U
 
 import Prelude hiding (length, (*), (^), map, all)
@@ -51,6 +53,9 @@ mkPerm k p = let arr = generate k p in
 
 identity :: Int -> Perm
 identity n = assert (n > 0) $ Perm (enumFromN 0 n)
+
+cycPerm :: Int -> [[Int]] -> Perm
+cycPerm n cycles = modify (\ mv -> M.forM_ cycles $ \ (c:cyc) -> zipWithM_ (PM.write mv) (c:cyc) (cyc ++ [c])) (P.enumFromN 0 n)
 
 cycleNotation :: Perm -> String -> ST s String
 cycleNotation p rest = do

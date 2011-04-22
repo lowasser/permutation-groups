@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns, RecordWildCards, NamedFieldPuns #-}
 {-# OPTIONS -funbox-strict-fields #-}
-module Data.Group.Permutation.Group (PermGroup, permutationGroup, member) where
+module Data.Group.Permutation.Group (PermGroup, permutationGroup, member, exhaustive) where
 
 import Control.Exception.Base
 import Control.Monad.ST
@@ -73,3 +73,10 @@ filter !deg !alpha !i !table
 
 fixes :: Perm -> Int -> Bool
 fixes p i = p ! i == i
+
+exhaustive :: Int -> [Perm] -> [Perm]
+exhaustive deg gens = update [identity deg]
+  where update xs = let
+	    ys = L.nub (xs ++ [y | x <- xs, g <- gens, y <- [g * x, x * g, inverse g * x, x * inverse g]])
+	    in if L.length ys > L.length xs then update ys else xs
+	
