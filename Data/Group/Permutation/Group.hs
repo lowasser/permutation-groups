@@ -35,11 +35,7 @@ permutationGroup :: Int -> [Perm] -> PermGroup
 permutationGroup !deg gens = assert (L.all (\ g -> degree g == deg) gens) $ let
   cosetTables = V.map V.fromList $ buildTables deg gens
   generators0 = V.fromList gens
-  generators
-    | V.sum (V.map V.length cosetTables) <= V.length generators0
-        = V.concat (V.toList cosetTables)
-    | otherwise
-        = generators0
+  generators = generators0
   order = V.product (V.map V.length cosetTables)
   in Group{..}
 
@@ -47,7 +43,7 @@ member :: Perm -> PermGroup -> Bool
 member alpha Group{cosetTables, deg} = assert (degree alpha == deg) $ member_loop alpha 0 where
   member_loop !alpha !i
     | i >= V.length cosetTables = True
-    | otherwise = case V.find (`fixes` (i+1)) (V.map (\ gamma -> inverse gamma * alpha) (V.unsafeIndex cosetTables i)) of
+    | otherwise = case V.find (`fixes` i) (V.map (\ gamma -> inverse gamma * alpha) (V.unsafeIndex cosetTables i)) of
 	Just alpha' -> member_loop alpha' (i+1)
 	Nothing -> False
 
@@ -55,25 +51,25 @@ type MCosetTable s = MVector s [Perm]
 
 buildTables :: Int -> [Perm] -> Vector [Perm]
 buildTables deg generators = create $ do
-  table <- MV.replicate (deg-1) []
+  table <- MV.replicate (deg-1) [identity deg]
   let go_build (alpha:queue) = do
-	result <- filter alpha 0 table
+	result <- filter deg alpha 0 table
 	go_build (queue ++ result)
       go_build [] = return ()
-  go_build generators
+  go_build (generators ++ map inverse generators)
   return table
 
-filter :: Perm -> Int -> MCosetTable s -> ST s [Perm]
-filter !alpha !i !table
+filter :: Int -> Perm -> Int -> MCosetTable s -> ST s [Perm]
+filter !deg !alpha !i !table
   | i >= MV.length table = return []
   | otherwise = do
       gammas <- read table i
-      case [alpha' | gamma <- gammas, let alpha' = inverse gamma * alpha, fixes alpha' (i+1)] of
+      case [alpha' | gamma <- gammas, let alpha' = inverse gamma * alpha, fixes alpha' i] of
 	[] -> do
-	  write table i (alpha:gammas)
+	  write table i (alpha:inverse alpha:gammas)
 	  rest <- fmap L.concat $ M.sequence [read table j | j <- [i..MV.length table - 1]]
-	  return [alpha * gamma | gamma <- rest]
-	(alpha':_) -> filter alpha' (i+1) table
+	  return [gamma * alpha | gamma <- rest]
+	(alpha':_) -> filter deg alpha' (i+1) table
 
 fixes :: Perm -> Int -> Bool
 fixes p i = p ! i == i
