@@ -1,11 +1,11 @@
 {-# LANGUAGE BangPatterns #-}
-module Data.Group.Permutation.Permutation where
+module Data.Group.Permutation.Permutation (Perm, inverse, degree, (*), (!), mkPerm, identity) where
 
 import Control.Exception.Base
-import Data.Vector.Primitive
+import Data.Vector.Primitive hiding ((!))
 import qualified Data.Vector.Primitive as P
 
-import Prelude hiding (length, (*), map)
+import Prelude hiding (length, (*), map, all)
 
 infixr 6 *
 
@@ -27,7 +27,7 @@ mkPerm k p = let arr = generate k p in
   assert (all (< k) arr) $ Perm arr
 
 (!) :: Perm -> Int -> Int
-Perm p ! i = assert (i < length p) $ P.unsafeIndex p i
+(!) (Perm p) i = assert (i < length p) $ P.unsafeIndex p i
 
 identity :: Int -> Perm
 identity n = assert (n > 0) $ Perm (enumFromN 0 n)
