@@ -55,7 +55,7 @@ identity :: Int -> Perm
 identity n = assert (n > 0) $ Perm (enumFromN 0 n)
 
 cycPerm :: Int -> [[Int]] -> Perm
-cycPerm n cycles = modify (\ mv -> M.forM_ cycles $ \ (c:cyc) -> zipWithM_ (PM.write mv) (c:cyc) (cyc ++ [c])) (P.enumFromN 0 n)
+cycPerm n cycles = Perm $ modify (\ mv -> M.forM_ cycles $ \ (c:cyc) -> M.zipWithM_ (PM.write mv) (c:cyc) (cyc ++ [c])) (P.enumFromN 0 n)
 
 cycleNotation :: Perm -> String -> ST s String
 cycleNotation p rest = do

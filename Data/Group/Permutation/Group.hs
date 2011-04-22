@@ -68,7 +68,8 @@ filter !deg !alpha !i !table
 	[] -> do
 	  write table i (alpha:inverse alpha:gammas)
 	  rest <- fmap L.concat $ M.sequence [read table j | j <- [i..MV.length table - 1]]
-	  return [gamma * alpha | gamma <- rest]
+          prev <- fmap L.concat $ M.sequence [read table j | j <- [0..i-1]]
+	  return ([gamma * alpha | gamma <- rest] ++ [alpha * gamma | gamma <- prev])
 	(alpha':_) -> filter deg alpha' (i+1) table
 
 fixes :: Perm -> Int -> Bool
