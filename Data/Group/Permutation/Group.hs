@@ -25,7 +25,6 @@ buildTables !deg generators = assert (L.all (\ g -> degree g == deg) generators)
       go_build [] = return ()
   go_build generators
   return table
-  
 
 filter :: Perm -> Int -> MCosetTable s -> ST s [Perm]
 filter !alpha !i !table
@@ -35,8 +34,8 @@ filter !alpha !i !table
       case [alpha' | gamma <- gammas, let alpha' = inverse gamma * alpha, fixes alpha' (i+1)] of
 	[] -> do
 	  write table i (alpha:gammas)
-	  rest <- fmap L.concat $ M.sequence [read table j | j <- [i+1..MV.length table - 1]]
-	  return [alpha * gamma | gamma <- gammas ++ rest]
+	  rest <- fmap L.concat $ M.sequence [read table j | j <- [i..MV.length table - 1]]
+	  return [alpha * gamma | gamma <- rest]
 	(alpha':_) -> filter alpha' (i+1) table
 
 fixes :: Perm -> Int -> Bool
