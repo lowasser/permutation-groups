@@ -33,7 +33,14 @@ identityProp n = printTestCase "Identity" $ do
   let i = identity n
   return $ printTestCase (show p) $ conjoin [p * i == p, i * p == p]
 
+associativeProp :: Int -> Property
+associativeProp n = printTestCase "Associative" $ do
+  a <- genPerm n
+  b <- genPerm n
+  c <- genPerm n
+  return $ printTestCase (show (a, b, c)) $ (a * b) * c == a * (b * c)
+
 tests :: Property
 tests = property $ sized $ \ m -> do
   n <- choose (1, m)
-  return $ conjoin $ map ($ n) [compositionProp, inverseProp, identityProp]
+  return $ conjoin $ map ($ n) [compositionProp, inverseProp, identityProp, associativeProp]
