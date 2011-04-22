@@ -5,7 +5,7 @@ import qualified Data.Vector.Primitive as P
 
 import Prelude hiding (length, (*), map)
 
-newtype Perm = Perm {getPerm :: Vector Int} deriving (Eq) -- p[i] is where i goes
+newtype Perm = Perm {getPerm :: Vector Int} deriving (Eq, Show) -- p[i] is where i goes
 
 inverse :: Perm -> Perm
 inverse (Perm p) = Perm (backpermute (enumFromN 0 n) p)
@@ -15,7 +15,7 @@ degree :: Perm -> Int
 degree (Perm p) = length p
 
 (*) :: Perm -> Perm -> Perm
-Perm p * Perm q = Perm (map ((P.!) q) p)
+Perm p * Perm q = Perm (map ((P.!) p) q)
 
 mkPerm :: Int -> (Int -> Int) -> Perm
 mkPerm k p = Perm (generate k p)
