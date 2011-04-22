@@ -15,12 +15,25 @@ genPerm n = do
   let perm = P.modify (\ xs -> sequence_ [P.swap xs i j | (i, j) <- zip [0..] swaps]) (P.enumFromN 0 n)
   return $ mkPerm n ((P.!) perm)
 
-compositionProp :: Property
-compositionProp = printTestCase "Composition" $ sized $ \ m -> do
-  n <- choose (1, m)
+compositionProp :: Int -> Property
+compositionProp n = printTestCase "Composition" $ do
   p1 <- genPerm n
   p2 <- genPerm n
   return $ printTestCase (show (p1, p2)) $ mkPerm n ((p1 !) . (p2 !)) == p1 * p2
 
-tests :: [Property]
-tests = [compositionProp]
+inverseProp :: Int -> Property
+inverseProp n = printTestCase "Inverse" $ do
+  p <- genPerm n
+  let pX = inverse p; i = identity n
+  return $ printTestCase (show p) $ conjoin [i == p * pX, i == pX * p]
+
+identityProp :: Int -> Property
+identityProp n = printTestCase "Identity" $ do
+  p <- genPerm n
+  let i = identity n
+  return $ printTestCase (show p) $ conjoin [p * i == p, i * p == p]
+
+tests :: Property
+tests = property $ sized $ \ m -> do
+  n <- choose (1, m)
+  return $ conjoin $ map ($ n) [compositionProp, inverseProp, identityProp]
