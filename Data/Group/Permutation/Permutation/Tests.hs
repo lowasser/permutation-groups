@@ -50,4 +50,4 @@ injective n = printTestCase "Injectivity" $ do
 tests :: Property
 tests = property $ sized $ \ m -> do
   n <- choose (1, m)
-  return $ conjoin $ map ($ n) [compositionProp, inverseProp, identityProp, associativeProp, injective]
+  return $ (n > 0) ==> (conjoin $ map ($ n) [compositionProp, inverseProp, identityProp, associativeProp, injective])

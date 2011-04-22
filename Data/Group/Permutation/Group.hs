@@ -37,25 +37,25 @@ permutationGroup !deg gens = assert (L.all (\ g -> degree g == deg) gens) $ let
   generators0 = V.fromList gens
   generators
     | V.sum (V.map V.length cosetTables) <= V.length generators0
-        = V.concat cosetTables
+        = V.concat (V.toList cosetTables)
     | otherwise
         = generators0
   order = V.product (V.map V.length cosetTables)
   in Group{..}
 
 member :: Perm -> PermGroup -> Bool
-member alpha Group{!cosetTables, deg} = assert (degree alpha == deg) $ member_loop alpha 0 where
+member alpha Group{cosetTables, deg} = assert (degree alpha == deg) $ member_loop alpha 0 where
   member_loop !alpha !i
-    | i >= V.length cosetTables = return True
-    | otherwise = case V.find (`fixes` i+1) (V.map (\ gamma -> inverse gamma * alpha) (V.unsafeIndex cosetTables i)) of
+    | i >= V.length cosetTables = True
+    | otherwise = case V.find (`fixes` (i+1)) (V.map (\ gamma -> inverse gamma * alpha) (V.unsafeIndex cosetTables i)) of
 	Just alpha' -> member_loop alpha' (i+1)
-	Nothing -> return False
+	Nothing -> False
 
 type MCosetTable s = MVector s [Perm]
 
 buildTables :: Int -> [Perm] -> Vector [Perm]
 buildTables deg generators = create $ do
-  table <- MV.new (deg-1)
+  table <- MV.replicate (deg-1) []
   let go_build (alpha:queue) = do
 	result <- filter alpha 0 table
 	go_build (queue ++ result)

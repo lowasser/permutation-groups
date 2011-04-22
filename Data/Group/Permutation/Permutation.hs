@@ -21,7 +21,7 @@ instance Show Perm where
   showsPrec _ perm rest = runST (cycleNotation perm rest)
 
 inverse :: Perm -> Perm
-inverse (Perm p) = Perm (unsafeBackpermute (enumFromN 0 n) p)
+inverse (Perm p) = Perm (unsafeUpdate_ (P.replicate n 0) p (P.enumFromN 0 n))
   where n = length p
 
 degree :: Perm -> Int
@@ -56,7 +56,7 @@ cycleNotation :: Perm -> String -> ST s String
 cycleNotation p rest = do
   done <- U.replicate n False
   let find_cycle i cont
-	| i >= n  = cont ("]" ++ rest)
+	| i >= n  = cont (":" ++ shows n ("]" ++ rest))
 	| otherwise  = do
 	    doneI <- U.read done i
 	    if doneI then find_cycle (i+1) cont else do
@@ -71,3 +71,7 @@ cycleNotation p rest = do
 	  fmap (i:) (get_cycle i' start)
   find_cycle 0 (\ str -> return ("[" ++ str))
   where n = degree p
+
+{-# RULES
+--      "inverse/*" forall p q . inverse p * q = let n = degree p in Perm (unsafeUpdate_ (P.replicate n 0) (getPerm p) (getPerm q))
+  #-}
