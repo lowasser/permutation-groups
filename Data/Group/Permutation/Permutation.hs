@@ -1,16 +1,17 @@
 {-# LANGUAGE BangPatterns #-}
-module Data.Group.Permutation.Permutation (Perm, inverse, degree, (*), (!), mkPerm, identity) where
+module Data.Group.Permutation.Permutation (Perm, inverse, degree, (*), (!), (^), mkPerm, identity) where
 
 import Control.Monad.ST
 
 import qualified Data.List as L
+import Data.Bits
 
 import Control.Exception.Base
 import Data.Vector.Primitive hiding ((!), (++))
 import qualified Data.Vector.Primitive as P
 import qualified Data.Vector.Unboxed.Mutable as U
 
-import Prelude hiding (length, (*), map, all)
+import Prelude hiding (length, (*), (^), map, all)
 
 infixr 6 *
 
@@ -29,6 +30,17 @@ degree (Perm p) = length p
 (*) :: Perm -> Perm -> Perm
 Perm !p * Perm q = assert (length p == length q) $
   Perm (map (P.unsafeIndex p) q)
+
+(^) :: Perm -> Int -> Perm
+p ^ n = case compare n 0 of
+    LT -> do_pow (inverse p) (-n)
+    EQ -> identity (degree p)
+    GT -> do_pow p n
+  where do_pow !p 0 = identity (degree p)
+	do_pow !p 1 = p
+	do_pow !p k
+	  | even k = do_pow (p * p) (k `shiftR` 1)
+	  | otherwise = p * do_pow (p * p) (k `shiftR` 1)
 
 mkPerm :: Int -> (Int -> Int) -> Perm
 mkPerm k p = let arr = generate k p in

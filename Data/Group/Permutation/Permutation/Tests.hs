@@ -1,4 +1,4 @@
-module Data.Group.Permutation.Permutation.Tests (tests) where
+module Data.Group.Permutation.Permutation.Tests (genPerm, tests) where
 
 import Control.Monad
 import Test.QuickCheck
