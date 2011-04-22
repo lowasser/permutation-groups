@@ -56,7 +56,7 @@ buildTables deg generators = create $ do
 	result <- filter deg alpha 0 table
 	go_build (queue ++ result)
       go_build [] = return ()
-  go_build (generators ++ map inverse generators)
+  go_build (generators)
   return table
 
 filter :: Int -> Perm -> Int -> MCosetTable s -> ST s [Perm]
