@@ -6,7 +6,7 @@ import Control.Monad.ST
 import qualified Data.List as L
 
 import Control.Exception.Base
-import Data.Vector.Primitive hiding ((!))
+import Data.Vector.Primitive hiding ((!), (++))
 import qualified Data.Vector.Primitive as P
 import qualified Data.Vector.Unboxed.Mutable as U
 
@@ -46,7 +46,7 @@ cycleNotation p rest = do
   let find_cycle i cont
 	| i >= n  = cont ("]" ++ rest)
 	| otherwise  = do
-	    doneI <- read done i
+	    doneI <- U.read done i
 	    if doneI then find_cycle (i+1) cont else do
 	      cyc <- get_cycle i i
 	      case cyc of
@@ -54,8 +54,8 @@ cycleNotation p rest = do
 		_ -> find_cycle (i+1) (\ str -> cont $ "(" ++ L.intercalate " " (L.map show cyc) ++ ")" ++ str)
       get_cycle i start = do
 	let i' = p ! i
-	if i' == start then return [] else do
-	  write done i True
-	  liftM (i:) (get_cycle i' start)
+	U.write done i True
+	if i' == start then return [i] else do
+	  fmap (i:) (get_cycle i' start)
   find_cycle 0 (\ str -> return ("[" ++ str))
   where n = degree p
