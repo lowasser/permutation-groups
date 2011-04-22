@@ -28,10 +28,18 @@ instance Eq PermGroup where
       = deg g1 == deg g2 && order g1 == order g2 && V.all (`member` g2) (generators g1)
     | otherwise = g2 == g1
 
+instance Show PermGroup where
+  show Group{generators} = "<" ++ L.intercalate ", " (L.map show $ V.toList generators) ++ ">"
+
 permutationGroup :: Int -> [Perm] -> PermGroup
 permutationGroup !deg gens = assert (L.all (\ g -> degree g == deg) gens) $ let
   cosetTables = V.map V.fromList $ buildTables deg gens
-  generators = V.fromList gens
+  generators0 = V.fromList gens
+  generators
+    | V.sum (V.map V.length cosetTables) <= V.length generators0
+        = V.concat cosetTables
+    | otherwise
+        = generators0
   order = V.product (V.map V.length cosetTables)
   in Group{..}
 
