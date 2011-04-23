@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns, RecordWildCards, NamedFieldPuns #-}
 {-# OPTIONS -funbox-strict-fields #-}
 module Data.Group.Permutation.Group (
-  PermGroup, cosetTables, order, permutationGroup, member, subgroup, exhaustive, isSubgroup,
+  PermGroup, deg, generators, cosetTables, order, permutationGroup, member, subgroup, exhaustive, isSubgroup,
   orbits) where
 
 import Control.Exception.Base
