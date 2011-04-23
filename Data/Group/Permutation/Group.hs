@@ -1,9 +1,10 @@
 {-# LANGUAGE BangPatterns, RecordWildCards, NamedFieldPuns #-}
 {-# OPTIONS -funbox-strict-fields #-}
-module Data.Group.Permutation.Group (PermGroup, order, permutationGroup, member, subgroup, exhaustive, isSubgroup) where
+module Data.Group.Permutation.Group (PermGroup, cosetTables, order, permutationGroup, member, subgroup, exhaustive, isSubgroup) where
 
 import Control.Exception.Base
 import Control.Monad.ST
+import Debug.Trace
 
 import qualified Control.Monad as M
 import qualified Data.List as L
@@ -60,8 +61,8 @@ subgroup inH g@Group{deg, generators} = let
 	  result <- filter deg table filters alpha
 	  go_build (queue ++ result)
 	go_build [] = return ()
-    go_build generators
-    return (V.unsafeTail table)
+    go_build (V.toList generators)
+    return (MV.unsafeTail table)
   order = V.product (V.map V.length subgroupTables)
   in Group{order, deg, cosetTables = subgroupTables,
       generators = V.concat (V.toList subgroupTables)}
@@ -87,7 +88,7 @@ filter !deg !table !member = go_filter 0 where
 	gammas <- read table i
 	case [alpha' | gamma <- gammas, let alpha' = inverse gamma * alpha, V.unsafeIndex member i alpha'] of
 	  [] -> do
-	    write table i (alpha:inverse alpha:gammas)
+	    write table i (alpha:gammas)
 	    rest <- fmap L.concat $ M.sequence [read table j | j <- [i..MV.length table - 1]]
 	    prev <- fmap L.concat $ M.sequence [read table j | j <- [0..i-1]]
 	    return ([gamma * alpha | gamma <- rest] ++ [alpha * gamma | gamma <- prev])

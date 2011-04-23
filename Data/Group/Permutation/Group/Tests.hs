@@ -27,7 +27,23 @@ groupElemProp deg = printTestCase "Group element" $ sized $ \ m -> do
   x <- mkGroupElement deg gens
   return $ printTestCase (show (x, g)) $ member x g
 
+subGroupProp :: Int -> Property
+subGroupProp deg = printTestCase "Subgroup" $ sized $ \ m -> do
+  nGens <- choose (1, m)
+  gens <- fmap (V.fromListN nGens) $ vectorOf nGens (genPerm deg)
+  let g = permutationGroup deg (V.toList gens)
+  x <- genPerm deg
+  let h = permutationGroup deg (x:V.toList gens)
+  return $ printTestCase (show (x, g, x `member` g)) $ (x `member` g) == (h `isSubgroup` g)
+
+orderProp :: Int -> Property
+orderProp deg = printTestCase "Order" $ sized $ \ m -> do
+  nGens  <- choose (1, floor (sqrt (fromIntegral m)))
+  gens <- fmap (V.fromListN nGens) $ vectorOf nGens (genPerm deg)
+  let g = permutationGroup deg (V.toList gens)
+  return $ printTestCase  (show (g, cosetTables g, order g)) $ length (exhaustive deg (V.toList gens)) == order g
+
 tests :: Property
 tests = property $ sized $ \ m0 -> resize (floor (sqrt (realToFrac m0))) $ sized $ \ m -> do
   deg <- choose (1, m)
-  return $ (deg > 0) ==> (conjoin $ map ($ deg) [groupElemProp])
+  return $ (deg > 0) ==> (conjoin $ map ($ deg) [groupElemProp, orderProp, subGroupProp])
