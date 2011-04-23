@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns, RecordWildCards, NamedFieldPuns #-}
 {-# OPTIONS -funbox-strict-fields #-}
-module Data.Group.Permutation.Group (PermGroup, order, permutationGroup, member, subgroup, exhaustive) where
+module Data.Group.Permutation.Group (PermGroup, order, permutationGroup, member, subgroup, exhaustive, isSubgroup) where
 
 import Control.Exception.Base
 import Control.Monad.ST
@@ -30,6 +30,10 @@ instance Eq PermGroup where
 
 instance Show PermGroup where
   show Group{generators} = "<" ++ L.intercalate ", " (L.map show $ V.toList generators) ++ ">"
+
+isSubgroup :: PermGroup -> PermGroup -> Bool
+g `isSubgroup` h = order g <= order h &&
+  V.all (`member` h) (generators g)
 
 permutationGroup :: Int -> [Perm] -> PermGroup
 permutationGroup !deg gens = assert (L.all (\ g -> degree g == deg) gens) $ let
@@ -61,7 +65,6 @@ subgroup inH g@Group{deg, generators} = let
   order = V.product (V.map V.length subgroupTables)
   in Group{order, deg, cosetTables = subgroupTables,
       generators = V.concat (V.toList subgroupTables)}
-      
 
 type MCosetTable s = MVector s [Perm]
 
