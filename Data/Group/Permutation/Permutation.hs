@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module Data.Group.Permutation.Permutation (Perm, inverse, degree, (*), (!), (^), mkPerm, identity, cycPerm) where
+module Data.Group.Permutation.Permutation (Perm, nubPerms, inverse, degree, (*), (!), (^), mkPerm, identity, cycPerm) where
 
 import qualified Control.Monad as M
 import Control.Monad.ST
@@ -17,10 +17,17 @@ import Prelude hiding (length, (*), (^), map, all)
 
 infixr 6 *
 
-newtype Perm = Perm {getPerm :: Vector Int} deriving (Eq) -- p[i] is where i goes
+newtype Perm = Perm {getPerm :: Vector Int} deriving (Eq, Ord) -- p[i] is where i goes
 
 instance Show Perm where
   showsPrec _ perm rest = runST (cycleNotation perm rest)
+
+nubPerms :: [Perm] -> [Perm]
+nubPerms = elimDups . L.sort where
+  elimDups (p1:ps@(p2:_))
+    | p1 == p2 = elimDups ps
+    | otherwise = p1:elimDups ps
+  elimDups ps = ps
 
 inverse :: Perm -> Perm
 inverse (Perm p) = Perm (unsafeUpdate_ (P.replicate n 0) p (P.enumFromN 0 n))

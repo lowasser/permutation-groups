@@ -7,6 +7,8 @@ import Data.Group.Permutation.Permutation.Tests (genPerm)
 import qualified Data.Vector as V
 
 import Data.List (foldl')
+import qualified Data.List as L
+import qualified Data.IntSet as IS
 
 import Prelude hiding ((^), (*))
 
@@ -41,9 +43,17 @@ orderProp deg = printTestCase "Order" $ sized $ \ m -> do
   nGens  <- choose (1, floor (sqrt (fromIntegral m)))
   gens <- fmap (V.fromListN nGens) $ vectorOf nGens (genPerm deg)
   let g = permutationGroup deg (V.toList gens)
-  return $ printTestCase  (show (g, cosetTables g, order g)) $ length (exhaustive deg (V.toList gens)) == order g
+  return $ printTestCase (show (g, cosetTables g, order g)) $ length (exhaustive deg (V.toList gens)) == order g
+
+orbitProp :: Int -> Property
+orbitProp deg = printTestCase "Orbits" $ sized $ \ m -> do
+  nGens <- choose (1, m)
+  gens <- fmap (V.fromListN nGens) $ vectorOf nGens (genPerm deg)
+  let g = permutationGroup deg (V.toList gens)
+  x <- mkGroupElement deg gens
+  return $ printTestCase (show (x, g)) $ L.all (\ i -> IS.member (x ! i) ((V.!) (orbits g) i)) [0..deg-1]
 
 tests :: Property
 tests = property $ sized $ \ m0 -> resize (floor (sqrt (realToFrac m0))) $ sized $ \ m -> do
   deg <- choose (1, m)
-  return $ (deg > 0) ==> (conjoin $ map ($ deg) [groupElemProp, orderProp, subGroupProp])
+  return $ (deg > 0) ==> (conjoin $ map ($ deg) [groupElemProp, orderProp, subGroupProp, orbitProp])

@@ -1,6 +1,8 @@
 {-# LANGUAGE BangPatterns, RecordWildCards, NamedFieldPuns #-}
 {-# OPTIONS -funbox-strict-fields #-}
-module Data.Group.Permutation.Group (PermGroup, cosetTables, order, permutationGroup, member, subgroup, exhaustive, isSubgroup) where
+module Data.Group.Permutation.Group (
+  PermGroup, cosetTables, order, permutationGroup, member, subgroup, exhaustive, isSubgroup,
+  orbits) where
 
 import Control.Exception.Base
 import Control.Monad.ST
@@ -14,6 +16,7 @@ import Data.Vector (Vector, create)
 import qualified Data.Vector as V
 import Data.Vector.Mutable
 import qualified Data.Vector.Mutable as MV
+import qualified Data.IntSet as IS
 
 import Prelude hiding (read, filter, (*))
 
@@ -21,7 +24,8 @@ data PermGroup = Group {
   deg :: !Int,
   order :: Int,
   generators :: Vector Perm,
-  cosetTables :: Vector (Vector Perm)}
+  cosetTables :: Vector (Vector Perm),
+  orbits :: Vector IS.IntSet}
 
 instance Eq PermGroup where
   g == h = order g == order h && isSubgroup g h
@@ -30,15 +34,25 @@ instance Show PermGroup where
   show Group{generators} = "<" ++ L.intercalate ", " (L.map show $ V.toList generators) ++ ">"
 
 isSubgroup :: PermGroup -> PermGroup -> Bool
-g `isSubgroup` h = deg g1 == deg g2 && order g <= order h && V.all (`member` h) (generators g)
+g `isSubgroup` h = deg g == deg h && order g <= order h && V.all (`member` h) (generators g)
+
+mkGroup :: Int -> Maybe [Perm] -> Vector (Vector Perm) -> PermGroup
+mkGroup deg gens cosetTables = let
+  generators = V.fromList $ let
+    gens' = nubPerms (L.concatMap V.toList (V.toList cosetTables))
+    in case gens of
+      Just gens
+	| L.length gens < L.length gens'
+		-> gens
+      _		-> gens'
+  orbits = constructOrbits deg (V.toList generators)
+  order = V.product (V.map V.length cosetTables)
+  in Group{..}
 
 permutationGroup :: Int -> [Perm] -> PermGroup
 permutationGroup !deg gens = assert (L.all (\ g -> degree g == deg) gens) $ let
   cosetTables = V.map V.fromList $ buildTables deg gens
-  generators0 = V.fromList gens
-  generators = generators0
-  order = V.product (V.map V.length cosetTables)
-  in Group{..}
+  in mkGroup deg (Just gens) cosetTables
 
 member :: Perm -> PermGroup -> Bool
 member alpha Group{cosetTables, deg} = assert (degree alpha == deg) $ member_loop alpha 0 where
@@ -59,9 +73,7 @@ subgroup inH g@Group{deg, generators} = let
 	go_build [] = return ()
     go_build (V.toList generators)
     return (MV.unsafeTail table)
-  order = V.product (V.map V.length subgroupTables)
-  in Group{order, deg, cosetTables = subgroupTables,
-      generators = V.concat (V.toList subgroupTables)}
+  in mkGroup deg Nothing subgroupTables
 
 type MCosetTable s = MVector s [Perm]
 
@@ -98,4 +110,10 @@ exhaustive deg gens = update [identity deg]
   where update xs = let
 	    ys = L.nub (xs ++ [y | x <- xs, g <- gens, y <- [g * x, x * g, inverse g * x, x * inverse g]])
 	    in if L.length ys > L.length xs then update ys else xs
-	
+
+constructOrbits :: Int -> [Perm] -> Vector IS.IntSet
+constructOrbits !deg gens = L.foldl' propagate orbits0 [0..deg-1]
+  where orbits0 = V.generate deg (\ i -> foldr IS.insert (IS.singleton i) [p ! i | p <- gens])
+	propagate orbits j = V.accum IS.union orbits 
+	    [(i, V.unsafeIndex orbits k) | let reaches = V.unsafeIndex orbits j,
+		i <- IS.toList reaches, k <- IS.toList reaches, i /= k]
