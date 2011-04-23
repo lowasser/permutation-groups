@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module Data.Group.Permutation.Permutation (Perm, nubPerms, inverse, degree, (*), (!), (^), mkPerm, identity, cycPerm) where
+module Data.Group.Permutation.Permutation (Perm(..), nubPerms, inverse, degree, (*), (!), (^), mkPerm, identity, cycPerm) where
 
 import qualified Control.Monad as M
 import Control.Monad.ST
