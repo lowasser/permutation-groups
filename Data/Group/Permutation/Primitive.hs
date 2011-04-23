@@ -15,6 +15,7 @@ import qualified Data.Vector as V
 
 import Data.Group.Permutation.Permutation
 import Data.Group.Permutation.Group
+import Debug.Trace
 
 type Block = Int
 type BlockSystem = P.Vector Block
@@ -45,13 +46,13 @@ refiner !g !system !i
   | P.unsafeIndex system i == 0
       = refiner g system (i+1)
   | otherwise
-      = let system' = imprimitiveBlock g system i 0
+      = let system0 = P.modify (\ mv -> replaceWith mv (P.unsafeIndex system i) 0) system
+	    system' = imprimitiveBlock g system i
 	  in refiner g (if isTrivial system' then system else system') (i+1)
 
-imprimitiveBlock :: PermGroup -> BlockSystem -> Int -> Block -> BlockSystem
-imprimitiveBlock !g !f0 !omega !block = P.modify (\ f -> do
+imprimitiveBlock :: PermGroup -> BlockSystem -> Int -> BlockSystem
+imprimitiveBlock !g !f0 !omega = P.modify (\ f -> do
   let d = deg g
-  PM.write f omega block
   let go (beta:c0) = do
 	alpha <- PM.read f beta
 	let proc c !gi = do

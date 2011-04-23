@@ -1,19 +1,14 @@
-module Data.Group.Permutation.Permutation.Tests (genPerm, tests) where
+module Data.Group.Permutation.Permutation.Tests (tests) where
 
 import Control.Monad
 import Test.QuickCheck
 
 import Data.Group.Permutation.Permutation
+import Data.Group.Permutation.Tests.Utils
 import qualified Data.Vector.Primitive as P
 import qualified Data.Vector.Primitive.Mutable as P
 
 import Prelude hiding ((*))
-
-genPerm :: Int -> Gen Perm
-genPerm n = do
-  swaps <- vectorOf n $ choose (0, n-1)
-  let perm = P.modify (\ xs -> sequence_ [P.swap xs i j | (i, j) <- zip [0..] swaps]) (P.enumFromN 0 n)
-  return $ mkPerm n ((P.!) perm)
 
 compositionProp :: Int -> Property
 compositionProp n = printTestCase "Composition" $ do
